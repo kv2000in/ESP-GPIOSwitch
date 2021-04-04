@@ -6,10 +6,15 @@
 	objectVersion = 50;
 	objects = {
 
+/* Begin PBXFileReference section */
+		2AFDBFB9261A4B5700059684 /* ESP8266-Websocket-GPIOSwitch-Server-SanatanDharma */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "ESP8266-Websocket-GPIOSwitch-Server-SanatanDharma"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXGroup section */
 		2AFDBFB2261A4B3000059684 = {
 			isa = PBXGroup;
 			children = (
+				2AFDBFB9261A4B5700059684 /* ESP8266-Websocket-GPIOSwitch-Server-SanatanDharma */,
 			);
 			sourceTree = "<group>";
 		};
