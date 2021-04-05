@@ -13,6 +13,12 @@
  * References:
  *
  * https://github.com/Links2004/arduinoWebSockets
+ * 
+ * nodeUSB Flash Config
+ * 15:56:33.377 -> Flash ide  size: 4194304 bytes
+15:56:33.378 -> Flash ide speed: 40000000 Hz
+15:56:33.380 -> Flash ide mode:  DIO
+15:56:33.381 -> Flash Chip configuration ok.
  *
  */
 
@@ -22,6 +28,7 @@
 #include <Hash.h>
 #include <ESP8266WebServer.h>
 #include <string.h>
+#include <ArduinoOTA.h>
 #define MAX_STRING_LEN  32
 
 // Function to return a substring defined by a delimiter at an index
@@ -42,8 +49,8 @@ char* subStr (char* str, char *delim, int index) {
 
 }
 
-const char *ssid = "88999";
-const char *password = "9999";
+const char *WIFI_SSID = "*****";
+const char *WIFI_PASS = "*****";
 //Strange nodemcu numbering
 int GPIO1 = 5;    
 int GPIO2 = 4; 
@@ -546,7 +553,51 @@ void handleNotFound()
   server.send(404, "text/plain", message);
 }
 
+void connect() {
 
+  // Connect to Wifi.
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(WIFI_SSID);
+
+//  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  // WiFi fix: https://github.com/esp8266/Arduino/issues/2186
+ // WiFi.persistent(false);
+ // WiFi.mode(WIFI_OFF);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  WiFi.config(IPAddress(192,168,1,205), IPAddress(192,168,1,2), IPAddress(255,255,255,0),IPAddress(192,168,1,2));
+  unsigned long wifiConnectStart = millis();
+
+  while (WiFi.status() != WL_CONNECTED) {
+    // Check to see if
+    if (WiFi.status() == WL_CONNECT_FAILED) {
+      Serial.println("Failed to connect to WiFi. Please verify credentials: ");
+      delay(10000);
+    }
+
+    delay(500);
+    Serial.println("...");
+    // Only try for 5 seconds.
+    if (millis() - wifiConnectStart > 15000) {
+      Serial.println("Failed to connect to WiFi");
+      return;
+    }
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+ // Serial.println(millis()-currentmillis); //=506
+  
+  Serial.println();
+
+  // Serial.println(millis()-currentmillis); //=1434
+   
+}
 
 void setup()
 { 
@@ -571,28 +622,7 @@ void setup()
   Serial.println();
   Serial.println();
 
-  for(uint8_t t = 4; t > 0; t--) {
-    Serial.printf("[SETUP] BOOT WAIT %d...\r\n", t);
-    Serial.flush();
-    delay(1000);
-  }
-
-  WiFiMulti.addAP(ssid, password);
-
-  while(WiFiMulti.run() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(100);
-  }
-
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-
-  Serial.print("Connect to http://");
-  Serial.println(WiFi.localIP());
+ connect();
   
   server.on("/", handleRoot);
   server.onNotFound(handleNotFound);
@@ -603,6 +633,38 @@ void setup()
   webSocket.onEvent(webSocketEvent);
 
 
+/* ************OTA********************* */
+
+// Port defaults to 8266
+// ArduinoOTA.setPort(8266);
+
+// Hostname defaults to esp8266-[ChipID]
+// ArduinoOTA.setHostname("myesp8266");
+
+// No authentication by default
+// ArduinoOTA.setPassword((const char *)"123");
+
+ArduinoOTA.onStart([]() {
+Serial1.println("Start");
+});
+ArduinoOTA.onEnd([]() {
+Serial1.println("\nEnd");
+});
+ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+Serial1.printf("Progress: %u%%\r", (progress / (total / 100)));
+});
+ArduinoOTA.onError([](ota_error_t error) {
+Serial1.printf("Error[%u]: ", error);
+if (error == OTA_AUTH_ERROR) Serial1.println("Auth Failed");
+else if (error == OTA_BEGIN_ERROR) Serial1.println("Begin Failed");
+else if (error == OTA_CONNECT_ERROR) Serial1.println("Connect Failed");
+else if (error == OTA_RECEIVE_ERROR) Serial1.println("Receive Failed");
+else if (error == OTA_END_ERROR) Serial1.println("End Failed");
+});
+ArduinoOTA.begin();
+
+/****************************************************/  
+
 
 }
 
@@ -610,5 +672,6 @@ void loop()
 {
   webSocket.loop();
   server.handleClient();
+  ArduinoOTA.handle();
 
 }
