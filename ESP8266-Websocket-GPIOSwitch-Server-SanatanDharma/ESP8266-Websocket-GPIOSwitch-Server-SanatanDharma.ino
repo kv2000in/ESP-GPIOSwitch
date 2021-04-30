@@ -49,8 +49,8 @@ char* subStr (char* str, char *delim, int index) {
 
 }
 
-const char *WIFI_SSID = "*****";
-const char *WIFI_PASS = "*****";
+const char *WIFI_SSID = "****";
+const char *WIFI_PASS = "****";
 //Strange nodemcu numbering
 int GPIO1 = 5;    
 int GPIO2 = 4; 
@@ -536,7 +536,18 @@ void handleRoot()
 {
   server.send_P(200, "text/html", INDEX_HTML);
 }
-
+void handleON(){
+  digitalWrite(GPIO2, HIGH);
+  webSocket.broadcastTXT("ON-2", 4);
+  server.send(200);
+  
+  }
+void handleOFF(){
+  digitalWrite(GPIO2, LOW);
+  webSocket.broadcastTXT("OFF-2", 5);
+  server.send(200);
+  
+  }
 void handleNotFound()
 {
   String message = "File Not Found\n\n";
@@ -625,6 +636,8 @@ void setup()
  connect();
   
   server.on("/", handleRoot);
+  server.on("/ON", handleON);
+  server.on("/OFF", handleOFF);
   server.onNotFound(handleNotFound);
 
   server.begin();
