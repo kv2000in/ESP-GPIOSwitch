@@ -23,7 +23,7 @@
  */
 
 #include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
+//#include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <Hash.h>
 #include <ESP8266WebServer.h>
@@ -48,8 +48,17 @@ char* subStr (char* str, char *delim, int index) {
   return sub;
 
 }
+/* to be used in case it fails to connect to the given network. Create own AP with these credentials"*/
+#ifndef APSSID
+#define APSSID "mySwitch1"
+#define APPSK  "hctiwSym123"
+#endif
 
-const char *WIFI_SSID = "****";
+/* Set these to your desired credentials. */
+const char *ssid = APSSID;
+const char *password = APPSK;
+
+const char *WIFI_SSID = "8888";
 const char *WIFI_PASS = "****";
 //Strange nodemcu numbering
 int GPIO1 = 5;    
@@ -64,7 +73,7 @@ int val2=0;
 int val5=0;
 int val6=0;
 
-ESP8266WiFiMulti WiFiMulti;
+//ESP8266WiFiMulti WiFiMulti;
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(8000);
@@ -579,7 +588,7 @@ void connect() {
  // WiFi.mode(WIFI_OFF);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  WiFi.config(IPAddress(192,168,1,205), IPAddress(192,168,1,2), IPAddress(255,255,255,0),IPAddress(192,168,1,2));
+  WiFi.config(IPAddress(192,168,1,144), IPAddress(192,168,1,2), IPAddress(255,255,255,0),IPAddress(192,168,1,2));
   unsigned long wifiConnectStart = millis();
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -594,7 +603,9 @@ void connect() {
     // Only try for 5 seconds.
     if (millis() - wifiConnectStart > 15000) {
       Serial.println("Failed to connect to WiFi");
+      createownAP();
       return;
+      
     }
   }
 
@@ -610,6 +621,19 @@ void connect() {
    
 }
 
+void createownAP(){
+  /***************** AP mode*******************/
+Serial.print("Configuring OWN access point...");
+WiFi.mode(WIFI_AP);
+WiFi.softAP(ssid, password);
+WiFi.printDiag(Serial);
+IPAddress myIP = WiFi.softAPIP();
+Serial.print("AP IP address: ");
+Serial.println(myIP);
+
+/***********************************************/
+  
+  }
 void setup()
 { 
 
